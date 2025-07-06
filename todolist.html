@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Minimal To-Do List</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #a5b4fc;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --border: #e2e8f0;
+        }
+
+        .dark-mode {
+            --primary: #818cf8;
+            --primary-light: #6366f1;
+            --text: #f8fafc;
+            --text-light: #94a3b8;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --border: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            transition: background 0.3s ease, color 0.3s ease;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: transform 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: rotate(30deg);
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background-color: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary);
+            transition: width 0.5s ease, background-color 0.5s ease;
+            width: 0%;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .add-task {
+            display: flex;
+            gap: 0.5rem;
+            width: 100%;
+        }
+
+        .add-task input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background-color: var(--card);
+            color: var(--text);
+            font-size: 1rem;
+            transition: border 0.2s ease;
+        }
+
+        .add-task input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .add-task button {
+            padding: 0 1.5rem;
+            border-radius: 8px;
+            border: none;
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .add-task button:hover {
+            background-color: var(--primary-light);
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            list-style: none;
+        }
+
+        .task-item {
+            background-color: var(--card);
+            padding: 1rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .task-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-checkbox {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            transition: background 0.2s ease, border 0.2s ease;
+        }
+
+        .task-checkbox:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .task-checkbox:checked::after {
+            content: '✓';
+            position: absolute;
+            color: white;
+            font-size: 0.9rem;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .task-content {
+            flex: 1;
+            font-size: 1rem;
+            word-break: break-word;
+        }
+
+        .task-content.completed {
+            text-decoration: line-through;
+            color: var(--text-light);
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .task-btn {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: color 0.2s ease;
+        }
+
+        .task-btn:hover {
+            color: var(--primary);
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            padding: 2rem 0;
+            text-align: center;
+            color: var(--text-light);
+        }
+
+        .empty-icon {
+            width: 100px;
+            height: 100px;
+            opacity: 0.5;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: var(--text-light);
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .add-task {
+                flex-direction: column;
+            }
+            
+            .add-task button {
+                padding: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>TaskFlow</h1>
+            <button class="theme-toggle" id="themeToggle">🌓</button>
+        </header>
+
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div class="stats">
+            <span id="completedCount">0 tasks completed</span>
+            <span id="totalCount">0 total tasks</span>
+        </div>
+
+        <div class="add-task">
+            <input type="text" id="taskInput" placeholder="Add a new task...">
+            <button id="addBtn">Add</button>
+        </div>
+
+        <ul class="task-list" id="taskList">
+            <!-- Tasks will be added here dynamically -->
+        </ul>
+
+        <footer>
+            <p>Double-click a task to edit it • Drag to reorder</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const taskInput = document.getElementById('taskInput');
+            const addBtn = document.getElementById('addBtn');
+            const taskList = document.getElementById('taskList');
+            const themeToggle = document.getElementById('themeToggle');
+            const progressBar = document.getElementById('progressBar');
+            const completedCount = document.getElementById('completedCount');
+            const totalCount = document.getElementById('totalCount');
+
+            // State
+            let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            let isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+            // Initialize
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+            }
+            renderTasks();
+            updateStats();
+
+            // Event Listeners
+            addBtn.addEventListener('click', addTask);
+            taskInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') addTask();
+            });
+            themeToggle.addEventListener('click', toggleTheme);
+
+            // Functions
+            function addTask() {
+                const text = taskInput.value.trim();
+                if (text === '') return;
+
+                const newTask = {
+                    id: Date.now(),
+                    text: text,
+                    completed: false,
+                    createdAt: new Date()
+                };
+
+                tasks.unshift(newTask);
+                updateLocalStorage();
+                renderTasks();
+                updateStats();
+                taskInput.value = '';
+            }
+
+            function toggleTaskComplete(id) {
+                const task = tasks.find(task => task.id === id);
+                if (task) {
+                    task.completed = !task.completed;
+                    updateLocalStorage();
+                    renderTasks();
+                    updateStats();
+                }
+            }
+
+            function deleteTask(id) {
+                tasks = tasks.filter(task => task.id !== id);
+                updateLocalStorage();
+                renderTasks();
+                updateStats();
+            }
+
+            function editTask(id) {
+                const task = tasks.find(task => task.id === id);
+                if (!task) return;
+
+                const taskElement = document.querySelector(`[data-id="${id}"] .task-content`);
+                const currentText = taskElement.textContent;
+                
+                taskElement.innerHTML = `<input type="text" value="${currentText}" class="edit-input">`;
+                const input = taskElement.querySelector('.edit-input');
+                input.focus();
+                
+                input.addEventListener('blur', function() {
+                    finishEditing(id, input.value);
+                });
+                
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        finishEditing(id, input.value);
+                    }
+                });
+            }
+
+            function finishEditing(id, newText) {
+                const task = tasks.find(task => task.id === id);
+                if (task) {
+                    task.text = newText.trim() || task.text;
+                    updateLocalStorage();
+                    renderTasks();
+                }
+            }
+
+            function renderTasks() {
+                if (tasks.length === 0) {
+                    taskList.innerHTML = `
+                        <div class="empty-state">
+                            <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/a54462be-9403-4eb3-8c9d-ceb6f169b498.png" alt="Illustration of a clipboard with a checkmark" class="empty-icon" />
+                            <p>No tasks yet. Add one to get started!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                taskList.innerHTML = '';
+                tasks.forEach(task => {
+                    const taskElement = document.createElement('li');
+                    taskElement.className = 'task-item';
+                    taskElement.dataset.id = task.id;
+                    taskElement.innerHTML = `
+                        <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
+                        <div class="task-content ${task.completed ? 'completed' : ''}">${task.text}</div>
+                        <div class="task-actions">
+                            <button class="task-btn edit-btn">✏️</button>
+                            <button class="task-btn delete-btn">🗑️</button>
+                        </div>
+                    `;
+
+                    // Add event listeners
+                    const checkbox = taskElement.querySelector('.task-checkbox');
+                    const editBtn = taskElement.querySelector('.edit-btn');
+                    const deleteBtn = taskElement.querySelector('.delete-btn');
+                    const content = taskElement.querySelector('.task-content');
+
+                    checkbox.addEventListener('change', () => toggleTaskComplete(task.id));
+                    deleteBtn.addEventListener('click', () => deleteTask(task.id));
+                    editBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        editTask(task.id);
+                    });
+                    content.addEventListener('dblclick', () => editTask(task.id));
+
+                    taskList.appendChild(taskElement);
+                });
+            }
+
+            function updateStats() {
+                const total = tasks.length;
+                const completed = tasks.filter(task => task.completed).length;
+                const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+                completedCount.textContent = `${completed} task${completed !== 1 ? 's' : ''} completed`;
+                totalCount.textContent = `${total} total task${total !== 1 ? 's' : ''}`;
+                progressBar.style.width = `${percentage}%`;
+
+                // Change color based on progress
+                if (percentage < 30) {
+                    progressBar.style.backgroundColor = '#ef4444'; // red
+                } else if (percentage < 70) {
+                    progressBar.style.backgroundColor = '#f59e0b'; // orange
+                } else {
+                    progressBar.style.backgroundColor = 'var(--primary)'; // default
+                }
+            }
+
+            function toggleTheme() {
+                isDarkMode = !isDarkMode;
+                if (isDarkMode) {
+                    document.body.classList.add('dark-mode');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                }
+                localStorage.setItem('darkMode', isDarkMode);
+            }
+
+            function updateLocalStorage() {
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+            }
+
+            // Drag and drop functionality
+            let dragSrcEl = null;
+
+            function handleDragStart(e) {
+                dragSrcEl = this;
+                e.dataTransfer.effectAllowed = 'move';
+                setTimeout(() => {
+                    this.style.opacity = '0.4';
+                }, 0);
+            }
+
+            function handleDragOver(e) {
+                if (e.preventDefault) {
+                    e.preventDefault();
+                }
+                e.dataTransfer.dropEffect = 'move';
+                return false;
+            }
+
+            function handleDragEnter() {
+                this.classList.add('drag-over');
+            }
+
+            function handleDragLeave() {
+                this.classList.remove('drag-over');
+            }
+
+            function handleDrop(e) {
+                if (e.stopPropagation) {
+                    e.stopPropagation();
+                }
+
+                if (dragSrcEl !== this) {
+                    const draggedId = parseInt(dragSrcEl.dataset.id);
+                    const targetId = parseInt(this.dataset.id);
+                    
+                    const draggedIndex = tasks.findIndex(task => task.id === draggedId);
+                    const targetIndex = tasks.findIndex(task => task.id === targetId);
+                    
+                    // Reorder tasks array
+                    const [removed] = tasks.splice(draggedIndex, 1);
+                    tasks.splice(targetIndex, 0, removed);
+                    
+                    updateLocalStorage();
+                    renderTasks();
+                }
+                return false;
+            }
+
+            function handleDragEnd() {
+                this.style.opacity = '1';
+                document.querySelectorAll('.task-item').forEach(el => {
+                    el.classList.remove('drag-over');
+                });
+            }
+
+            // Setup drag and drop for all task items
+            function setupDragAndDrop() {
+                const taskItems = document.querySelectorAll('.task-item');
+                
+                taskItems.forEach(item => {
+                    item.setAttribute('draggable', 'true');
+                    item.addEventListener('dragstart', handleDragStart, false);
+                    item.addEventListener('dragenter', handleDragEnter, false);
+                    item.addEventListener('dragover', handleDragOver, false);
+                    item.addEventListener('dragleave', handleDragLeave, false);
+                    item.addEventListener('drop', handleDrop, false);
+                    item.addEventListener('dragend', handleDragEnd, false);
+                });
+            }
+
+            // Setup drag and drop after any render
+            const originalRenderTasks = renderTasks;
+            renderTasks = function() {
+                originalRenderTasks();
+                setupDragAndDrop();
+            };
+
+            // Initial setup
+            setupDragAndDrop();
+        });
+    </script>
+</body>
+</html>
+
